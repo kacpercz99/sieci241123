@@ -1,19 +1,41 @@
 import socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+import threading
 
-server_address = ('62.171.135.103', 42068)
-client_socket.connect(server_address)
-nick = input("Podaj nick: ")
-try:
-    message = ''
+# Client configuration
+HOST = '62.171.135.103'
+PORT = 42068
+
+# Create a socket for the client
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect((HOST, PORT))
+
+
+# Function to receive and print messages from the server
+def receive():
     while True:
-        message = input()
-        message = f"{nick}: {message}"
-        client_socket.send(message.encode('utf-8'))
-        data = client_socket.recv(1024)
-        print(data.decode('utf-8'))
+        try:
+            # Receive data from the server
+            message = client.recv(1024).decode('utf-8')
+            print(message)
+        except:
+            # If an error occurs, the connection is likely closed
+            print("An error occurred. Connection closed.")
+            client.close()
+            break
 
-except KeyboardInterrupt:
-    print("\nZamykanie klienta...")
-finally:
-    client_socket.close()
+
+# Function to send messages to the server
+def send():
+    while True:
+        # Get user input
+        message = input()
+        # Send the message to the server
+        client.send(message.encode('utf-8'))
+
+
+# Create threads for receiving and sending messages
+receive_thread = threading.Thread(target=receive)
+receive_thread.start()
+
+send_thread = threading.Thread(target=send)
+send_thread.start()
